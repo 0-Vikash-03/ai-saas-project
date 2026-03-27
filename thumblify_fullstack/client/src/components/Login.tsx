@@ -21,12 +21,25 @@ const Login = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (state === 'login') {
-            login(formData);
-        } else {
-            signUp(formData);
+
+        try {
+            if (state === 'login') {
+                await login({
+                    email: formData.email,
+                    password: formData.password,
+                });
+            } else {
+                await signUp({
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                });
+            }
+        } catch (err: any) {
+            console.log("ERROR:", err.response?.data);
+            alert(err.response?.data?.message || "Something went wrong");
         }
     };
 
