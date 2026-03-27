@@ -8,9 +8,12 @@ import api from "../configs/api";
 import toast from "react-hot-toast";
 
 const MyGeneration = () => {
-  const { isLoggedIn } = useAuth();
+  // ✅ FIX: rename auth loading
+  const { user, loading: authLoading } = useAuth();
+
   const navigate = useNavigate();
 
+  // ✅ State
   const [thumbnails, setThumbnails] = useState<IThumbnail[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -29,15 +32,12 @@ const MyGeneration = () => {
       setTick((prev) => prev + 1);
     }, 60000);
 
-
     return () => clearInterval(interval);
-
   }, []);
 
   /* ---------------- TIME AGO FUNCTION ---------------- */
   const timeAgo = (date?: string | Date) => {
     if (!date) return "";
-
 
     const past = new Date(date);
     if (isNaN(past.getTime())) return "";
@@ -67,8 +67,6 @@ const MyGeneration = () => {
 
     const years = Math.floor(days / 365);
     return `${years} year${years > 1 ? "s" : ""} ago`;
-
-
   };
 
   /* ---------------- FETCH THUMBNAILS ---------------- */
@@ -78,7 +76,8 @@ const MyGeneration = () => {
       const { data } = await api.get("/api/user/thumbnails");
       setThumbnails(data?.thumbnails || []);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error.message);
+      console.error("FETCH ERROR:", error);
+      toast.error(error?.response?.data?.message || "Failed to fetch");
     } finally {
       setLoading(false);
     }
@@ -88,14 +87,11 @@ const MyGeneration = () => {
   const handleDownload = (image_url?: string) => {
     if (!image_url) return;
 
-
     const link = document.createElement("a");
     link.href = image_url.replace("/upload", "/upload/fl_attachment");
     document.body.appendChild(link);
     link.click();
     link.remove();
-
-
   };
 
   /* ---------------- DELETE ---------------- */
@@ -105,33 +101,40 @@ const MyGeneration = () => {
     );
     if (!confirmDelete) return;
 
-
     try {
       const { data } = await api.delete(`/api/thumbnail/delete/${id}`);
       toast.success(data.message);
 
-      setThumbnails((prev) => prev.filter((thumb) => thumb._id !== id));
+      setThumbnails((prev) =>
+        prev.filter((thumb) => thumb._id !== id)
+      );
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || error.message);
+      console.error("DELETE ERROR:", error);
+      toast.error(error?.response?.data?.message || "Delete failed");
     }
-
-
   };
 
+  /* ---------------- FETCH ON AUTH READY ---------------- */
   useEffect(() => {
-    if (isLoggedIn) fetchThumbnails();
-    else setThumbnails([]);
-  }, [isLoggedIn]);
+    if (!authLoading) {
+      if (user) {
+        fetchThumbnails();
+      } else {
+        setThumbnails([]);
+      }
+    }
+  }, [user, authLoading]);
 
   return (
-    <> <SoftBackdrop />
-
+    <>
+      <SoftBackdrop />
 
       <div className="px-6 md:px-16 lg:px-24 xl:px-32 py-10 bg-white min-h-screen">
-
         {/* HEADER */}
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-black">My Generations</h1>
+          <h1 className="text-3xl font-bold text-black">
+            My Generations
+          </h1>
           <p className="text-gray-500 mt-2">
             View and manage all your AI-generated thumbnails
           </p>
@@ -149,10 +152,12 @@ const MyGeneration = () => {
           </div>
         )}
 
-        {/* EMPTY STATE */}
+        {/* EMPTY */}
         {!loading && thumbnails.length === 0 && (
           <div className="text-center py-20">
-            <h3 className="text-lg font-semibold">No thumbnails yet</h3>
+            <h3 className="text-lg font-semibold">
+              No thumbnails yet
+            </h3>
             <p className="text-gray-500 mt-2">
               Generate your first thumbnail to see it here
             </p>
@@ -169,7 +174,9 @@ const MyGeneration = () => {
               return (
                 <div
                   key={thumb._id}
-                  onClick={() => navigate(`/generate/${thumb._id}`)}
+                  onClick={() =>
+                    navigate(`/generate/${thumb._id}`)
+                  }
                   className="group relative cursor-pointer rounded-2xl bg-white border shadow-sm hover:shadow-xl transition"
                 >
                   {/* IMAGE */}
@@ -180,11 +187,13 @@ const MyGeneration = () => {
                       <img
                         src={thumb.image_url}
                         alt={thumb.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition"
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                        {thumb.isGenerating ? "Generating…" : "No image"}
+                        {thumb.isGenerating
+                          ? "Generating…"
+                          : "No image"}
                       </div>
                     )}
                   </div>
@@ -212,26 +221,30 @@ const MyGeneration = () => {
                     </p>
                   </div>
 
-                  {/* ACTION BUTTONS */}
+                  {/* ACTIONS */}
                   <div
                     onClick={(e) => e.stopPropagation()}
                     className="absolute bottom-3 right-3 hidden group-hover:flex gap-2"
                   >
                     <TrashIcon
-                      onClick={() => handleDelete(thumb._id)}
-                      className="size-7 p-1 bg-white border rounded hover:bg-red-500 hover:text-white transition"
+                      onClick={() =>
+                        handleDelete(thumb._id)
+                      }
+                      className="size-7 p-1 bg-white border rounded hover:bg-red-500 hover:text-white"
                     />
 
                     <DownloadIcon
-                      onClick={() => handleDownload(thumb.image_url)}
-                      className="size-7 p-1 bg-white border rounded hover:bg-blue-600 hover:text-white transition"
+                      onClick={() =>
+                        handleDownload(thumb.image_url)
+                      }
+                      className="size-7 p-1 bg-white border rounded hover:bg-blue-600 hover:text-white"
                     />
 
                     <Link
                       target="_blank"
                       to={`/preview?thumbnail_url=${thumb.image_url}&title=${thumb.title}`}
                     >
-                      <ArrowUpRightIcon className="size-7 p-1 bg-white border rounded hover:bg-blue-600 hover:text-white transition" />
+                      <ArrowUpRightIcon className="size-7 p-1 bg-white border rounded hover:bg-blue-600 hover:text-white" />
                     </Link>
                   </div>
                 </div>
@@ -241,8 +254,6 @@ const MyGeneration = () => {
         )}
       </div>
     </>
-
-
   );
 };
 
