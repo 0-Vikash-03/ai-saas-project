@@ -43,9 +43,10 @@ const Login = () => {
         }
     };
 
+    // ✅ FIXED REDIRECT
     useEffect(() => {
         if (user) {
-            navigate('/');
+            navigate('/generate'); // 🔥 FIX
         }
     }, [user]);
 
@@ -62,70 +63,61 @@ const Login = () => {
                         {state === 'login' ? 'Login' : 'Sign Up'}
                     </h1>
 
+                    {/* ✅ FIXED TEXT */}
                     <p className='text-gray-500 text-sm mt-2'>
-                        Please sign in to continue
+                        {state === 'login'
+                            ? 'Please sign in to continue'
+                            : 'Create your account to get started'}
                     </p>
 
                     {/* Name Field */}
                     {state !== 'login' && (
-                        <div className='flex items-center mt-6 w-full border border-gray-300 focus-within:border-blue-500 h-12 rounded-full overflow-hidden pl-6 gap-2 transition-all'>
+                        <div className='flex items-center mt-6 w-full border border-gray-300 focus-within:border-blue-500 h-12 rounded-full overflow-hidden pl-6 gap-2'>
                             <input
                                 type='text'
                                 name='name'
                                 placeholder='Name'
-                                className='w-full bg-transparent text-gray-800 placeholder-gray-400 outline-none'
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
+                                className='w-full outline-none'
                             />
                         </div>
                     )}
 
                     {/* Email */}
-                    <div className='flex items-center w-full mt-4 border border-gray-300 focus-within:border-blue-500 h-12 rounded-full overflow-hidden pl-6 gap-2 transition-all'>
+                    <div className='flex items-center mt-4 w-full border border-gray-300 h-12 rounded-full pl-6'>
                         <input
                             type='email'
                             name='email'
                             placeholder='Email address'
-                            className='w-full bg-transparent text-gray-800 placeholder-gray-400 outline-none'
                             value={formData.email}
                             onChange={handleChange}
                             required
+                            className='w-full outline-none'
                         />
                     </div>
 
                     {/* Password */}
-                    <div className='flex items-center mt-4 w-full border border-gray-300 focus-within:border-blue-500 h-12 rounded-full overflow-hidden pl-6 gap-2 transition-all'>
+                    <div className='flex items-center mt-4 w-full border border-gray-300 h-12 rounded-full pl-6'>
                         <input
                             type='password'
                             name='password'
                             placeholder='Password'
-                            className='w-full bg-transparent text-gray-800 placeholder-gray-400 outline-none'
                             value={formData.password}
                             onChange={handleChange}
                             required
+                            className='w-full outline-none'
                         />
                     </div>
 
-                    {/* Forgot Password */}
-                    <div className='mt-4 text-left'>
-                        <button
-                            type='button'
-                            className='text-sm text-blue-600 hover:underline'
-                        >
-                            Forgot password?
-                        </button>
-                    </div>
-
-                    {/* Submit Button */}
                     <button
                         type='submit'
-                        className='mt-4 w-full h-11 rounded-full text-white bg-blue-600 hover:bg-blue-700 transition font-medium'
+                        className='mt-4 w-full h-11 rounded-full text-white bg-blue-600'
                     >
                         {state === 'login' ? 'Login' : 'Sign Up'}
                     </button>
 
-                    {/* Toggle */}
                     <p
                         onClick={() =>
                             setState((prev) =>
@@ -137,7 +129,7 @@ const Login = () => {
                         {state === 'login'
                             ? "Don't have an account?"
                             : 'Already have an account?'}
-                        <span className='text-blue-600 hover:underline ml-1'>
+                        <span className='text-blue-600 ml-1'>
                             Click here
                         </span>
                     </p>
