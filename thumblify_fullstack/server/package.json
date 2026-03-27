@@ -24,7 +24,7 @@
         "express": "^5.2.1",
         "express-session": "^1.18.2",
         "mongodb": "^7.1.0",
-        "mongoose": "^9.2.1",
+        "mongoose": "^9.3.3",
         "pg": "^8.18.0"
     },
     "devDependencies": {

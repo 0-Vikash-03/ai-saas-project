@@ -1,67 +1,102 @@
-import express, { Request, Response } from 'express';
-import cors from 'cors'
-import 'dotenv/config'
-import connectDB from './configs/db.js';
-import session from 'express-session'
-import MongoStore from 'connect-mongo'
-import AuthRouter from './routes/AuthRoutes.js';
-import ThumbnailRouter from './routes/ThumbnailRoutes.js';
-import UserRouter from './routes/UserRoutes.js';
-import ContactRouter from './routes/ContactRoutes.js';
+import express, { Request, Response } from "express";
+import cors from "cors";
+import "dotenv/config";
+import session from "express-session";
+import MongoStore from "connect-mongo";
+
+import connectDB from "./configs/db.js";
+
+// Routes
+import AuthRouter from "./routes/AuthRoutes.js";
+import ThumbnailRouter from "./routes/ThumbnailRoutes.js";
+import UserRouter from "./routes/UserRoutes.js";
+import ContactRouter from "./routes/ContactRoutes.js";
 import scriptRoutes from "./routes/scriptRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 
-declare module 'express-session' {
-    interface SessionData {
-        isLoggedIn: boolean;
-        userId: string
-    }
+// Extend session types
+declare module "express-session" {
+  interface SessionData {
+    isLoggedIn: boolean;
+    userId: string;
+  }
 }
 
-await connectDB()
+// Connect DB
+await connectDB();
 
 const app = express();
 
-app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true
-}))
+// 🔥 TRUST PROXY (IMPORTANT for Render)
+app.set("trust proxy", 1);
 
-app.set('trust proxy', 1)
+// 🔥 CORS (FIXED for Vercel + Local)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://ai-saas-project-jade.vercel.app", // ⚠️ replace with your actual Vercel URL
+];
 
-app.use(session({
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+
+// 🔥 BODY PARSER
+app.use(express.json());
+
+// 🔥 SESSION (FIXED)
+app.use(
+  session({
+    name: "connect.sid",
     secret: process.env.SESSION_SECRET as string,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        path: '/'
-    }, 
     store: MongoStore.create({
-        mongoUrl: process.env.MONGODB_URI as string,
-        collectionName: 'sessions'
-    })
-}))
+      mongoUrl: process.env.MONGODB_URI as string,
+      collectionName: "sessions",
+    }),
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // HTTPS required
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    },
+  })
+);
 
-app.use(express.json())
-
-app.get('/', (req: Request, res: Response) => {
-    res.send('Server is Live!');
+// 🔥 HEALTH CHECK
+app.get("/", (req: Request, res: Response) => {
+  res.send("Server is Live 🚀");
 });
-app.use('/api/auth', AuthRouter)
-app.use('/api/thumbnail', ThumbnailRouter)
-app.use('/api/user', UserRouter)
-app.use('/api/contact', ContactRouter)
-app.use("/api/script", scriptRoutes)
-app.use("/api/blog", blogRoutes)
+
+// 🔥 ROUTES
+app.use("/api/auth", AuthRouter);
+app.use("/api/thumbnail", ThumbnailRouter);
+app.use("/api/user", UserRouter);
+app.use("/api/contact", ContactRouter);
+app.use("/api/script", scriptRoutes);
+app.use("/api/blog", blogRoutes);
 app.use("/api/video", videoRoutes);
 
+// 🔥 ERROR HANDLER (IMPORTANT)
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error(err);
+  res.status(500).json({ message: err.message || "Server Error" });
+});
+
+// 🔥 START SERVER
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
