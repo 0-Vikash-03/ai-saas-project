@@ -4,7 +4,6 @@ import "dotenv/config";
 
 import connectDB from "./configs/db.js";
 
-// Routes
 import AuthRouter from "./routes/AuthRoutes.js";
 import ThumbnailRouter from "./routes/ThumbnailRoutes.js";
 import UserRouter from "./routes/UserRoutes.js";
@@ -15,10 +14,28 @@ import videoRoutes from "./routes/videoRoutes.js";
 
 const app = express();
 
-// Middleware
 app.set("trust proxy", 1);
 
-app.use(cors({ origin: true, credentials: true }));
+// ✅ CORS FIX
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://ai-saas-project-git-main-0-vikash-03s-projects.vercel.app"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}));
+
+app.options("*", cors());
+
 app.use(express.json());
 
 // Routes
@@ -38,7 +55,6 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ message: err.message || "Server Error" });
 });
 
-// Start server properly
 const startServer = async () => {
   await connectDB();
 
