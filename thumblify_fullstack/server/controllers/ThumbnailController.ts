@@ -8,54 +8,13 @@ import {
 import ai from '../configs/ai.js';
 import { v2 as cloudinary } from 'cloudinary';
 
-/* ================= SAFE STYLE PROMPTS ================= */
+/* ================= TYPES ================= */
 
-const stylePrompts = {
-  'Bold & Graphic':
-    'high contrast thumbnail, bold typography, vibrant colors, expressive face, clean lighting, modern YouTube style',
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
-  'Tech/Futuristic':
-    'modern futuristic design, digital UI elements, soft glow effects, clean cyber aesthetic',
-
-  'Minimalist':
-    'clean minimalist design, simple layout, soft colors, clear focus',
-
-  'Photorealistic':
-    'realistic photo style, natural lighting, human-friendly expression, high clarity',
-
-  'Illustrated':
-    'digital illustration, colorful, friendly characters, clean vector style',
-};
-
-/* ================= COLOR SCHEMES ================= */
-
-const colorSchemeDescriptions = {
-  vibrant:
-    'vibrant and energetic colors, high saturation, balanced contrast, eye-catching palette',
-
-  sunset:
-    'warm sunset tones, orange pink and purple hues, soft gradients',
-
-  forest:
-    'natural green tones, earthy colors, calm organic palette',
-
-  neon:
-    'neon glow accents, electric blue and pink tones, modern lighting',
-
-  purple:
-    'purple dominant palette with magenta and violet tones',
-
-  monochrome:
-    'black and white tones with clean contrast',
-
-  ocean:
-    'cool blue and teal tones, fresh clean look',
-
-  pastel:
-    'soft pastel colors, low saturation, gentle tones',
-};
-
-/* ================= INPUT SANITIZER ================= */
+/* ================= SAFE INPUT ================= */
 
 function sanitizeInput(text: string) {
   if (!text) return '';
@@ -68,9 +27,17 @@ function sanitizeInput(text: string) {
 
 /* ================= CONTROLLER ================= */
 
-export const generateThumbnail = async (req: Request, res: Response) => {
+export const generateThumbnail = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId } = req.session;
+    // ✅ FIXED AUTH
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
 
     const {
       title,
@@ -86,7 +53,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
     /* ================= CREATE DB ENTRY ================= */
 
     const thumbnail = await Thumbnail.create({
-      userId,
+      userId, // ✅ FIXED
       title,
       prompt_used: safeUserPrompt,
       user_prompt: safeUserPrompt,
@@ -97,9 +64,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       isGenerating: true,
     });
 
-    /* ================= GEMINI CONFIG ================= */
-
-    const model = 'gemini-3.1-flash-image-preview';
+    /* ================= AI CONFIG ================= */
 
     const generationConfig: GenerateContentConfig = {
       maxOutputTokens: 8192,
@@ -110,7 +75,6 @@ export const generateThumbnail = async (req: Request, res: Response) => {
         aspectRatio: aspect_ratio || '16:9',
         imageSize: '1K',
       },
-      // Keep safety ON (recommended)
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
@@ -131,95 +95,50 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       ],
     };
 
-    /* ================= SAFE PROMPT BUILDER ================= */
+    /* ================= PROMPT ================= */
 
-    let prompt = `Create a YouTube thumbnail for the topic: "${title}".`;
+    let prompt = `Create a YouTube thumbnail for: "${title}".`;
 
-    if (style) {
-      prompt += ` Style: ${
-        stylePrompts[style as keyof typeof stylePrompts]
-      }.`;
-    }
+    if (style) prompt += ` Style: ${style}.`;
+    if (color_scheme) prompt += ` Color theme: ${color_scheme}.`;
+    if (safeUserPrompt) prompt += ` Details: ${safeUserPrompt}.`;
 
-    if (color_scheme) {
-      prompt += ` Colors: ${
-        colorSchemeDescriptions[
-          color_scheme as keyof typeof colorSchemeDescriptions
-        ]
-      }.`;
-    }
+    prompt += ` Clean, high quality, modern YouTube thumbnail.`;
 
-    if (safeUserPrompt) {
-      prompt += ` Include: ${safeUserPrompt}.`;
-    }
-
-    if (text_overlay) {
-      prompt += ` Add clear readable text saying: "${text_overlay}".`;
-    }
-
-    prompt += ` The thumbnail should be clean, high quality, visually appealing, and suitable for general audiences.`;
-
-    console.log('FINAL PROMPT:', prompt);
-
-    /* ================= CALL GEMINI ================= */
+    /* ================= GENERATE ================= */
 
     const response: any = await ai.models.generateContent({
-      model,
+      model: 'gemini-3.1-flash-image-preview',
       contents: [prompt],
       config: generationConfig,
     });
 
     const candidate = response?.candidates?.[0];
 
-    /* ================= ERROR HANDLING ================= */
-
-    if (!candidate) {
-      throw new Error('No response from AI model');
+    if (!candidate?.content?.parts) {
+      throw new Error('No image generated');
     }
 
-    if (candidate.finishReason === 'PROHIBITED_CONTENT') {
-      thumbnail.isGenerating = false;
-      await thumbnail.save();
-
-      return res.status(400).json({
-        success: false,
-        message:
-          'Your prompt was blocked by AI safety filters. Try simpler wording.',
-      });
-    }
-
-    if (!candidate.content?.parts) {
-      throw new Error('No content returned from model');
-    }
-
-    /* ================= EXTRACT IMAGE ================= */
-
-    let finalBuffer: Buffer | null = null;
+    let buffer: Buffer | null = null;
 
     for (const part of candidate.content.parts) {
       if (part.inlineData?.data) {
-        finalBuffer = Buffer.from(part.inlineData.data, 'base64');
+        buffer = Buffer.from(part.inlineData.data, 'base64');
         break;
       }
     }
 
-    if (!finalBuffer) {
-      throw new Error('No image data found');
-    }
+    if (!buffer) throw new Error('Image generation failed');
 
-    /* ================= UPLOAD TO CLOUDINARY ================= */
+    /* ================= CLOUDINARY ================= */
 
-    const base64Image = `data:image/png;base64,${finalBuffer.toString(
-      'base64'
-    )}`;
+    const upload = await cloudinary.uploader.upload(
+      `data:image/png;base64,${buffer.toString('base64')}`
+    );
 
-    const uploadResult = await cloudinary.uploader.upload(base64Image, {
-      resource_type: 'image',
-    });
+    /* ================= SAVE ================= */
 
-    /* ================= SAVE RESULT ================= */
-
-    thumbnail.image_url = uploadResult.secure_url;
+    thumbnail.image_url = upload.secure_url;
     thumbnail.isGenerating = false;
     await thumbnail.save();
 
@@ -228,6 +147,7 @@ export const generateThumbnail = async (req: Request, res: Response) => {
       message: 'Thumbnail generated successfully',
       thumbnail,
     });
+
   } catch (error: any) {
     console.error('generateThumbnail error:', error);
 
@@ -240,10 +160,10 @@ export const generateThumbnail = async (req: Request, res: Response) => {
 
 /* ================= DELETE ================= */
 
-export const deleteThumbnail = async (req: Request, res: Response) => {
+export const deleteThumbnail = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { userId } = req.session;
+    const userId = req.userId; // ✅ FIXED
 
     await Thumbnail.findOneAndDelete({ _id: id, userId });
 
@@ -252,8 +172,6 @@ export const deleteThumbnail = async (req: Request, res: Response) => {
       message: 'Thumbnail deleted successfully',
     });
   } catch (error: any) {
-    console.error(error);
-
     res.status(500).json({
       success: false,
       message: error.message,
