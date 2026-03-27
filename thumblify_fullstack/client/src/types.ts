@@ -1,63 +1,77 @@
+// ================= COMMON TYPES =================
+
 export interface SectionTitleProps {
-    text1: string;
-    text2: string;
-    text3: string;
+  text1: string;
+  text2: string;
+  text3?: string; // ✅ optional (more flexible)
+}
+
+// ================= TESTIMONIAL =================
+
+export interface ITestimonial {
+  image: string;
+  name: string;
+  handle: string;
+  date: string;
+  quote: string;
 }
 
 export interface TestimonialCardProps {
-    testimonial: ITestimonial;
-    index: number;
+  testimonial: ITestimonial;
+  index: number;
 }
 
-export interface ITestimonial {
-    image: string;
-    name: string;
-    handle: string;
-    date: string;
-    quote: string;
-}
+// ================= FEATURES =================
 
 export interface IFeature {
-    icon: string;
-    title: string;
-    description: string;
+  icon: string;
+  title: string;
+  description: string;
 }
 
-export interface IFooter {
-    title: string;
-    links: IFooterLink[];
-}
+// ================= NAVBAR =================
 
-export interface IFooterLink {
-    name: string;
-    href: string;
+export interface INavLink {
+  name: string;
+  href: string;
 }
 
 export interface NavbarProps {
-    navlinks: INavLink[];
+  navLinks: INavLink[]; // ✅ consistent naming
 }
 
-export interface INavLink {
-    name: string;
-    href: string;
+// ================= FOOTER =================
+
+export interface IFooterLink {
+  name: string;
+  href: string;
+}
+
+export interface IFooter {
+  title: string;
+  links: IFooterLink[];
+}
+
+// ================= PRICING =================
+
+export interface IPricing {
+  name: string;
+  price: number;
+  period: string;
+  features: string[];
+  mostPopular?: boolean; // ✅ optional
 }
 
 export interface PricingCardProps {
-    pricing: IPricing;
-    index: number;
+  pricing: IPricing;
+  index: number;
 }
 
-export interface IPricing {
-    name: string;
-    price: number;
-    period: string;
-    features: string[];
-    mostPopular: boolean;
-}
+// ================= SECTION =================
 
 export interface SectionProps {
-    title: string;
-    description: string;
-    buttonText: string;
-    buttonHref: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  buttonHref: string;
 }
