@@ -17,10 +17,10 @@ import videoRoutes from "./routes/videoRoutes.js";
 
 // Extend session types
 declare module "express-session" {
-  interface SessionData {
-    isLoggedIn: boolean;
-    userId: string;
-  }
+    interface SessionData {
+        isLoggedIn: boolean;
+        userId: string;
+    }
 }
 
 // Connect DB
@@ -33,22 +33,30 @@ app.set("trust proxy", 1);
 
 // 🔥 CORS (FIXED for Vercel + Local)
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "https://ai-saas-project-jade.vercel.app", // ⚠️ replace with your actual Vercel URL
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://ai-saas-project-jade.vercel.app", // ⚠️ replace with your actual Vercel URL
 ];
 
 app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
+    cors({
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true);
+
+            // ✅ allow localhost
+            if (origin.includes("localhost")) {
+                return callback(null, true);
+            }
+
+            // ✅ allow ALL vercel domains (production + preview)
+            if (origin.includes("vercel.app")) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+    })
 );
 
 // 🔥 BODY PARSER
@@ -56,27 +64,27 @@ app.use(express.json());
 
 // 🔥 SESSION (FIXED)
 app.use(
-  session({
-    name: "connect.sid",
-    secret: process.env.SESSION_SECRET as string,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI as string,
-      collectionName: "sessions",
-    }),
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // HTTPS required
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    },
-  })
+    session({
+        name: "connect.sid",
+        secret: process.env.SESSION_SECRET as string,
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGODB_URI as string,
+            collectionName: "sessions",
+        }),
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // HTTPS required
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        },
+    })
 );
 
 // 🔥 HEALTH CHECK
 app.get("/", (req: Request, res: Response) => {
-  res.send("Server is Live 🚀");
+    res.send("Server is Live 🚀");
 });
 
 // 🔥 ROUTES
@@ -90,13 +98,13 @@ app.use("/api/video", videoRoutes);
 
 // 🔥 ERROR HANDLER (IMPORTANT)
 app.use((err: any, req: Request, res: Response, next: any) => {
-  console.error(err);
-  res.status(500).json({ message: err.message || "Server Error" });
+    console.error(err);
+    res.status(500).json({ message: err.message || "Server Error" });
 });
 
 // 🔥 START SERVER
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+    console.log(`🚀 Server running on port ${port}`);
 });
