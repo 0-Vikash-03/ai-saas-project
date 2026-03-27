@@ -10,6 +10,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean; // ✅ ADD THIS
   login: (data: { email: string; password: string }) => Promise<void>;
   signUp: (data: { name: string; email: string; password: string }) => Promise<void>;
   logout: () => void;
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // ✅ Provider
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true); // ✅ ADD THIS
 
   // ✅ LOGIN
   const login = async (data: { email: string; password: string }) => {
@@ -32,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     } catch (err: any) {
       console.error("LOGIN ERROR:", err.response?.data || err.message);
-      throw err; // important for frontend handling
+      throw err;
     }
   };
 
@@ -56,18 +58,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  // ✅ FETCH USER (AUTO LOGIN)
+  // ✅ FETCH USER
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+
+      if (!token) {
+        setLoading(false); // ✅ IMPORTANT
+        return;
+      }
 
       const res = await api.get("/api/auth/verify");
       setUser(res.data.user);
 
     } catch (err) {
       console.error("VERIFY ERROR:", err);
-      logout(); // token invalid → logout
+      logout();
+    } finally {
+      setLoading(false); // ✅ IMPORTANT
     }
   };
 
@@ -76,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signUp, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );
