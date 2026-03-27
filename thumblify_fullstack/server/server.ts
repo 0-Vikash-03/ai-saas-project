@@ -16,7 +16,7 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-// ✅ CORS FIX
+// ✅ CORS (ONLY ONCE)
 const allowedOrigins = [
   "http://localhost:5173",
   "https://ai-saas-project-git-main-0-vikash-03s-projects.vercel.app"
@@ -31,10 +31,8 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
 }));
-
-app.use(cors());
 
 app.use(express.json());
 
@@ -48,6 +46,11 @@ app.use("/api/contact", ContactRouter);
 app.use("/api/script", scriptRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/video", videoRoutes);
+
+// ✅ 404 handler (safe, no "*")
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 // Error handler
 app.use((err: any, req: any, res: any, next: any) => {
