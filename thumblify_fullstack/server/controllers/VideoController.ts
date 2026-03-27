@@ -137,7 +137,7 @@ async function runVideoGeneration(
 
 export const generateVideo = async (req: Request, res: Response) => {
     try {
-        const { userId } = req.session;
+        const userId = (req as any).userId;
         const {
             title,
             prompt: user_prompt,
@@ -188,7 +188,7 @@ export const generateVideo = async (req: Request, res: Response) => {
 export const getVideoStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { userId } = req.session;
+       const userId = (req as any).userId;
 
         const video = await Video.findOne({ _id: id, userId });
 
@@ -211,7 +211,7 @@ export const getVideoStatus = async (req: Request, res: Response) => {
 export const deleteVideo = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { userId } = req.session;
+       const userId = (req as any).userId;
         await Video.findOneAndDelete({ _id: id, userId });
         return res.json({ message: 'Video deleted successfully' });
     } catch (error: any) {
@@ -221,7 +221,7 @@ export const deleteVideo = async (req: Request, res: Response) => {
 
 export const getUserVideos = async (req: Request, res: Response) => {
     try {
-        const { userId } = req.session;
+        const userId = (req as any).userId;
         const videos = await Video.find({ userId }).sort({ createdAt: -1 });
         return res.json({ videos });
     } catch (error: any) {
