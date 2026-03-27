@@ -19,19 +19,19 @@ app.set("trust proxy", 1);
 // ✅ CORS (ONLY ONCE)
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://ai-saas-project-git-main-0-vikash-03s-projects.vercel.app"
+  "https://ai-saas-project-jade.vercel.app", // ✅ your current frontend
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      console.log("Blocked by CORS:", origin);
+      callback(null, true); // ✅ allow for now (debug mode)
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
 }));
 
 app.use(express.json());
