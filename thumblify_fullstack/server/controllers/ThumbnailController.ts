@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthRequest } from '../middlewares/auth.js';
 import Thumbnail from '../models/Thumbnail.js';
 import {
   GenerateContentConfig,
@@ -7,12 +8,6 @@ import {
 } from '@google/genai';
 import ai from '../configs/ai.js';
 import { v2 as cloudinary } from 'cloudinary';
-
-/* ================= TYPES ================= */
-
-interface AuthRequest extends Request {
-  userId?: string;
-}
 
 /* ================= SAFE INPUT ================= */
 
@@ -29,7 +24,6 @@ function sanitizeInput(text: string) {
 
 export const generateThumbnail = async (req: AuthRequest, res: Response) => {
   try {
-    // ✅ FIXED AUTH
     const userId = req.userId;
 
     if (!userId) {
@@ -53,7 +47,7 @@ export const generateThumbnail = async (req: AuthRequest, res: Response) => {
     /* ================= CREATE DB ENTRY ================= */
 
     const thumbnail = await Thumbnail.create({
-      userId, // ✅ FIXED
+      userId,
       title,
       prompt_used: safeUserPrompt,
       user_prompt: safeUserPrompt,
@@ -163,7 +157,7 @@ export const generateThumbnail = async (req: AuthRequest, res: Response) => {
 export const deleteThumbnail = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = req.userId; // ✅ FIXED
+    const userId = req.userId;
 
     await Thumbnail.findOneAndDelete({ _id: id, userId });
 

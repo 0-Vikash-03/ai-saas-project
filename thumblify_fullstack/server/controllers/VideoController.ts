@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middlewares/auth.js';
 import Video from '../models/Video.js';
 import ai from '../configs/ai.js';
 import { v2 as cloudinary } from 'cloudinary';
@@ -56,7 +57,6 @@ async function runVideoGeneration(
             return;
         }
 
-        // Check if content was filtered by Google's safety system
         const filteredCount = operation.response?.raiMediaFilteredCount;
         const filteredReasons = operation.response?.raiMediaFilteredReasons;
 
@@ -101,7 +101,6 @@ async function runVideoGeneration(
 
         let uploadResult: any;
         if (typeof videoBytes === 'string' && videoBytes.startsWith('http')) {
-            // Google URL requires API key — download it ourselves first
             const googleUrl = `${videoBytes}&key=${process.env.GEMINI_API_KEY}`;
             const response = await fetch(googleUrl);
             if (!response.ok) {
@@ -135,9 +134,9 @@ async function runVideoGeneration(
     }
 }
 
-export const generateVideo = async (req: Request, res: Response) => {
+export const generateVideo = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).userId;
+        const userId = req.userId;
         const {
             title,
             prompt: user_prompt,
@@ -185,10 +184,10 @@ export const generateVideo = async (req: Request, res: Response) => {
     }
 };
 
-export const getVideoStatus = async (req: Request, res: Response) => {
+export const getVideoStatus = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-       const userId = (req as any).userId;
+        const userId = req.userId;
 
         const video = await Video.findOne({ _id: id, userId });
 
@@ -208,10 +207,10 @@ export const getVideoStatus = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteVideo = async (req: Request, res: Response) => {
+export const deleteVideo = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-       const userId = (req as any).userId;
+        const userId = req.userId;
         await Video.findOneAndDelete({ _id: id, userId });
         return res.json({ message: 'Video deleted successfully' });
     } catch (error: any) {
@@ -219,9 +218,9 @@ export const deleteVideo = async (req: Request, res: Response) => {
     }
 };
 
-export const getUserVideos = async (req: Request, res: Response) => {
+export const getUserVideos = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = (req as any).userId;
+        const userId = req.userId;
         const videos = await Video.find({ userId }).sort({ createdAt: -1 });
         return res.json({ videos });
     } catch (error: any) {

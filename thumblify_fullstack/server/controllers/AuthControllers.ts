@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../middlewares/auth.js";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -43,7 +44,7 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 // VERIFY
-export const verifyUser = async (req: any, res: Response) => {
+export const verifyUser = async (req: AuthRequest, res: Response) => {
   const user = await User.findById(req.userId).select("-password");
   res.json({ user });
 };
