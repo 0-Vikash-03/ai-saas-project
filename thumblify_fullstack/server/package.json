@@ -15,6 +15,13 @@
     "dependencies": {
         "@google/genai": "^1.44.0",
         "@google/generative-ai": "^0.24.1",
+        "@types/bcrypt": "^6.0.0",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/express-session": "^1.18.2",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/node": "^25.5.0",
+        "@types/pg": "^8.16.0",
         "axios": "^1.13.6",
         "bcrypt": "^6.0.0",
         "cloudinary": "^2.9.0",
@@ -30,13 +37,6 @@
         "tsx": "^4.21.0"
     },
     "devDependencies": {
-        "@types/bcrypt": "^6.0.0",
-        "@types/cors": "^2.8.19",
-        "@types/express": "^5.0.6",
-        "@types/express-session": "^1.18.2",
-        "@types/jsonwebtoken": "^9.0.10",
-        "@types/node": "^25.5.0",
-        "@types/pg": "^8.16.0",
         "nodemon": "^3.1.11",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3"
