@@ -1,49 +1,105 @@
 import { Request, Response } from "express";
 import ai from "../configs/ai.js";
+import {
+  GenerateContentConfig,
+  HarmBlockThreshold,
+  HarmCategory,
+} from "@google/genai";
 
 export const generateScript = async (req: Request, res: Response) => {
   try {
     const { topic, tone = "Professional", length = "Medium" } = req.body;
 
     if (!topic) {
-      return res.status(400).json({ message: "Topic is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Topic is required",
+      });
     }
 
-    const prompt = `
-Act as a professional YouTube script writer.
+    /* ================= CONFIG ================= */
 
-Write a ${length} YouTube video script about "${topic}".
+    const generationConfig: GenerateContentConfig = {
+      maxOutputTokens: 2048,
+      temperature: 0.7,
+      topP: 0.9,
+      responseModalities: ["TEXT"],
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        },
+      ],
+    };
+
+    /* ================= PROMPT ================= */
+
+    const prompt = `
+You are a professional YouTube script writer.
+
+Write a ${length} YouTube video script on: "${topic}"
 
 Tone: ${tone}
 
 Structure:
 1. Hook
-2. Problem explanation
+2. Problem
 3. Step-by-step solution
 4. Example
-5. Strong outro with CTA
+5. Outro with CTA
 
-Make it engaging and beginner-friendly.
+Make it engaging, clear, and beginner-friendly.
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [prompt],
+    /* ================= AI CALL ================= */
+
+    const response: any = await ai.models.generateContent({
+      model: "gemini-1.5-flash", // ✅ stable model
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: generationConfig,
     });
 
-    const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
+    /* ================= PARSE RESPONSE ================= */
+
+    const candidate = response?.candidates?.[0];
+
+    const text =
+      candidate?.content?.parts?.map((p: any) => p.text).join("") || "";
 
     if (!text) {
-      console.log("FULL RESPONSE:", JSON.stringify(response, null, 2));
-      return res.status(500).json({ message: "AI failed to generate content" });
+      console.error("FULL RESPONSE:", JSON.stringify(response, null, 2));
+
+      return res.status(500).json({
+        success: false,
+        message: "AI failed to generate script",
+      });
     }
 
-    return res.status(200).json({ script: text });
+    /* ================= RESPONSE ================= */
+
+    return res.status(200).json({
+      success: true,
+      script: text,
+    });
 
   } catch (error: any) {
-    console.error("Script Generation Error:", error);
+    console.error("SCRIPT ERROR:", error);
+
     return res.status(500).json({
-      message: error?.message || "Internal Server Error",
+      success: false,
+      message: error.message || "Internal Server Error",
     });
   }
 };
