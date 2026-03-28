@@ -2,14 +2,14 @@ import { Request, Response } from "express";
 import ai from "../configs/ai.js";
 
 export const generateScript = async (req: Request, res: Response) => {
-    try {
-        const { topic, tone = "Professional", length = "Medium" } = req.body;
+  try {
+    const { topic, tone = "Professional", length = "Medium" } = req.body;
 
-        if (!topic) {
-            return res.status(400).json({ message: "Topic is required" });
-        }
+    if (!topic) {
+      return res.status(400).json({ message: "Topic is required" });
+    }
 
-        const prompt = `
+    const prompt = `
 Act as a professional YouTube script writer.
 
 Write a ${length} YouTube video script about "${topic}".
@@ -26,25 +26,28 @@ Structure:
 Make it engaging and beginner-friendly.
 `;
 
-        const response: any = await ai.models.generateContent({
-            model: "gemini-2.5-flash",   // ✅ CORRECT & LATEST
-            contents: [prompt],
-            config: {
-                temperature: 0.8,
-                maxOutputTokens: 4096,
-            },
-        });
-        const text =
-            response?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
 
-        if (!text) {
-            throw new Error("Failed to generate script");
-        }
+    // ✅ FIXED RESPONSE PARSING
+    const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        res.json({ script: text });
-
-    } catch (error: any) {
-        console.log("Script Generation Error:", error);
-        res.status(500).json({ message: error.message });
+    if (!text) {
+      console.log("FULL RESPONSE:", JSON.stringify(response, null, 2));
+      throw new Error("Failed to generate script");
     }
+
+    res.json({ script: text });
+
+  } catch (error: any) {
+    console.log("Script Generation Error:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
