@@ -26,9 +26,17 @@ const ScriptGenerator = () => {
       );
 
       setScript(res.data.script);
-    } catch (error) {
-      console.error(error);
-      alert("Error generating script");
+
+    } catch (error: any) {
+      console.error("Frontend Error:", error);
+
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      alert(message);
+
     } finally {
       setLoading(false);
     }
@@ -88,9 +96,10 @@ const ScriptGenerator = () => {
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.03 }}
           onClick={handleGenerate}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all shadow-md"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold transition-all shadow-md"
         >
-          {loading ? "Generating..." : "Generate Script"}
+          {loading ? "Generating Script..." : "Generate Script"}
         </motion.button>
 
         {/* Output */}

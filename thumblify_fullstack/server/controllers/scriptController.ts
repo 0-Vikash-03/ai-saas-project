@@ -27,27 +27,24 @@ Make it engaging and beginner-friendly.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
+      model: "gemini-2.5-flash", // you can switch to gemini-1.5-flash if needed
+      contents: prompt, // ✅ correct for new SDK
     });
 
-    // ✅ FIXED RESPONSE PARSING
-    const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
+    // ✅ correct way to get text in NEW SDK
+    const text = response.text;
 
     if (!text) {
-      console.log("FULL RESPONSE:", JSON.stringify(response, null, 2));
-      throw new Error("Failed to generate script");
+      console.log("FULL RESPONSE:", response);
+      return res.status(500).json({ message: "AI failed to generate content" });
     }
 
-    res.json({ script: text });
+    return res.status(200).json({ script: text });
 
   } catch (error: any) {
-    console.log("Script Generation Error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("Script Generation Error:", error);
+    return res.status(500).json({
+      message: error?.message || "Internal Server Error",
+    });
   }
 };
