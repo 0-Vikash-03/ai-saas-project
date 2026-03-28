@@ -27,15 +27,14 @@ Make it engaging and beginner-friendly.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", // you can switch to gemini-1.5-flash if needed
-      contents: prompt, // ✅ correct for new SDK
+      model: "gemini-2.5-flash",
+      contents: [prompt],
     });
 
-    // ✅ correct way to get text in NEW SDK
-    const text = response.text;
+    const text = response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      console.log("FULL RESPONSE:", response);
+      console.log("FULL RESPONSE:", JSON.stringify(response, null, 2));
       return res.status(500).json({ message: "AI failed to generate content" });
     }
 

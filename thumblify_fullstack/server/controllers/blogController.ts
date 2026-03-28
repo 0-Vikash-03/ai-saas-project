@@ -28,26 +28,32 @@ Use markdown formatting.
 Make it engaging and readable.
 `;
 
-    const response: any = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [prompt],
     });
 
-    const blog = response.candidates[0].content.parts[0].text;
+    const blog = response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    res.json({
+    if (!blog) {
+      console.log("FULL RESPONSE:", JSON.stringify(response, null, 2));
+      return res.status(500).json({
+        success: false,
+        message: "AI failed to generate blog content",
+      });
+    }
+
+    return res.json({
       success: true,
       blog,
     });
 
-  } catch (error) {
-
+  } catch (error: any) {
     console.error("Blog generation error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Blog generation failed",
+      message: error?.message || "Blog generation failed",
     });
-
   }
 };
