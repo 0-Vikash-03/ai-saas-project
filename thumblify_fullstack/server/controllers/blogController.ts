@@ -29,14 +29,14 @@ Make it engaging and readable.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: prompt,
+      model: "gemini-2.5-flash",
+      contents: [prompt],
     });
 
-    const blog = response.text;
+    const blog = response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!blog) {
-      console.log("FULL RESPONSE:", response);
+      console.log("FULL RESPONSE:", JSON.stringify(response, null, 2));
       return res.status(500).json({
         success: false,
         message: "AI failed to generate blog content",
