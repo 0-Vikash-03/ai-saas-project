@@ -1,44 +1,39 @@
 {
-    "name": "server",
-    "version": "1.0.0",
-    "main": "index.js",
-    "type": "module",
-    "scripts": {
-        "start": "npx tsx server.ts",
-        "server": "nodemon --exec tsx server.ts",
-        "build": "tsc"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "description": "",
-    "dependencies": {
-        "@google/genai": "^1.44.0",
-        "@google/generative-ai": "^0.24.1",
-        "axios": "^1.13.6",
-        "bcrypt": "^6.0.0",
-        "cloudinary": "^2.9.0",
-        "connect-mongo": "^6.0.0",
-        "cors": "^2.8.6",
-        "dotenv": "^17.2.3",
-        "express": "^5.2.1",
-        "express-session": "^1.18.2",
-        "jsonwebtoken": "^9.0.3",
-        "mongodb": "^7.1.0",
-        "mongoose": "^9.3.3",
-        "pg": "^8.18.0",
-        "tsx": "^4.21.0"
-    },
-    "devDependencies": {
-        "@types/bcrypt": "^6.0.0",
-        "@types/cors": "^2.8.19",
-        "@types/express": "^5.0.6",
-        "@types/express-session": "^1.18.2",
-        "@types/jsonwebtoken": "^9.0.10",
-        "@types/node": "^25.4.0",
-        "@types/pg": "^8.16.0",
-        "nodemon": "^3.1.11",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.9.3"
-    }
+  "name": "server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "nodemon --exec tsx server.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^1.44.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.6",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
+    "connect-mongo": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.1.0",
+    "mongoose": "^9.3.3",
+    "pg": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.4.0",
+    "@types/pg": "^8.16.0",
+    "nodemon": "^3.1.11",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
 }
