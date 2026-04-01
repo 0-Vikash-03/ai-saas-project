@@ -1,10 +1,5 @@
 import { Request, Response } from "express";
 import ai from "../configs/ai.js";
-import {
-  GenerateContentConfig,
-  HarmBlockThreshold,
-  HarmCategory,
-} from "@google/genai";
 
 export const generateBlog = async (req: Request, res: Response) => {
   try {
@@ -16,33 +11,6 @@ export const generateBlog = async (req: Request, res: Response) => {
         message: "Topic is required",
       });
     }
-
-    /* ================= CONFIG ================= */
-
-    const generationConfig: GenerateContentConfig = {
-      maxOutputTokens: 4096,
-      temperature: 0.7,
-      topP: 0.9,
-      responseModalities: ["TEXT"],
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-      ],
-    };
 
     /* ================= PROMPT ================= */
 
@@ -64,29 +32,20 @@ Use markdown formatting.
 Make it engaging, informative, and easy to read.
 `;
 
-    /* ================= AI CALL ================= */
+    /* ================= AI CALL (FIXED) ================= */
 
-    const response: any = await ai.models.generateContent({
-      model: "gemini-1.5-flash", // ✅ stable
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-      config: generationConfig,
+    const model = ai.getGenerativeModel({
+      model: "gemini-1.5-flash",
     });
 
-    /* ================= PARSE ================= */
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
 
-    const candidate = response?.candidates?.[0];
+    const blog = response.text();
 
-    const blog =
-      candidate?.content?.parts?.map((p: any) => p.text).join("") || "";
+    /* ================= VALIDATION ================= */
 
     if (!blog) {
-      console.error("FULL RESPONSE:", JSON.stringify(response, null, 2));
-
       return res.status(500).json({
         success: false,
         message: "AI failed to generate blog",
@@ -101,7 +60,7 @@ Make it engaging, informative, and easy to read.
     });
 
   } catch (error: any) {
-    console.error("BLOG ERROR:", error);
+    console.error("BLOG ERROR:", error.message);
 
     return res.status(500).json({
       success: false,

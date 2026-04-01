@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import genAI from "../configs/ai.js";
+import ai from "../configs/ai.js";
 
 export const generateScript = async (req: Request, res: Response) => {
   try {
@@ -29,8 +29,8 @@ Structure:
 Make it engaging and beginner-friendly.
 `;
 
-    // ✅ Gemini model
-    const model = genAI.getGenerativeModel({
+    // ✅ CORRECT GEMINI USAGE
+    const model = ai.getGenerativeModel({
       model: "gemini-1.5-flash",
     });
 
@@ -42,7 +42,7 @@ Make it engaging and beginner-friendly.
     if (!text) {
       return res.status(500).json({
         success: false,
-        message: "AI failed to generate script",
+        message: "AI did not return content",
       });
     }
 
