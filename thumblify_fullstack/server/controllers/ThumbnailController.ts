@@ -99,7 +99,7 @@ export const generateThumbnail = async (req: AuthRequest, res: Response) => {
     /* ================= GENERATE ================= */
 
     const response: any = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp', // ✅ Correct model
+      model: 'gemini-3.1-flash-image-preview', // ✅ Correct model
       contents: [{ role: 'user', parts: [{ text: prompt }] }], // ✅ Correct format
       config: generationConfig,
     });

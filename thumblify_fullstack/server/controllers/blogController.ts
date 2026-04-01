@@ -32,7 +32,7 @@ Make it engaging, informative, and easy to read.
 
     // ✅ New SDK method
     const response: any = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: 'gemini-2.5-flash', // ✅ Updated model name",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
