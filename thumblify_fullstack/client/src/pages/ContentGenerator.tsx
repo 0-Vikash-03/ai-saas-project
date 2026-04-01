@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
+import api from "../configs/api"; // ✅ import your axios instance
 
 const ContentGenerator = () => {
   const [topic, setTopic] = useState("");
@@ -8,21 +8,20 @@ const ContentGenerator = () => {
   const [length, setLength] = useState("Medium");
   const [script, setScript] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGenerate = async () => {
     if (!topic) return alert("Please enter topic");
 
     try {
       setLoading(true);
+      setError("");
 
-      const res = await axios.post(
-        "http://localhost:3000/api/script/generate-script",
-        { topic, tone, length }
-      );
+      const res = await api.post("/api/script/generate-script", { topic, tone, length }); // ✅ uses Render URL
 
       setScript(res.data.script);
-    } catch (err) {
-      alert("Error generating script");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Error generating script");
     } finally {
       setLoading(false);
     }
@@ -31,7 +30,6 @@ const ContentGenerator = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col px-6 md:px-16 py-10">
 
-      {/* Title */}
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -40,7 +38,6 @@ const ContentGenerator = () => {
         AI Content Script Generator
       </motion.h1>
 
-      {/* Script Output (BIG + Scrollable) */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -52,13 +49,14 @@ const ContentGenerator = () => {
             {script}
           </pre>
         ) : (
-          <p className="text-gray-400">
-            Your generated script will appear here...
-          </p>
+          <p className="text-gray-400">Your generated script will appear here...</p>
         )}
       </motion.div>
 
-      {/* Bottom Input Section */}
+      {error && (
+        <p className="mt-4 text-red-500 text-sm">{error}</p>
+      )}
+
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -96,7 +94,8 @@ const ContentGenerator = () => {
 
         <button
           onClick={handleGenerate}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition font-semibold"
+          disabled={loading || !topic}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition font-semibold disabled:opacity-50"
         >
           {loading ? "Generating..." : "Generate Script"}
         </button>
