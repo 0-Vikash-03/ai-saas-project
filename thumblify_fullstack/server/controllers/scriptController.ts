@@ -1,10 +1,5 @@
 import { Request, Response } from "express";
-import ai from "../configs/ai.js";
-import {
-  GenerateContentConfig,
-  HarmBlockThreshold,
-  HarmCategory,
-} from "@google/genai";
+import genAI from "../configs/ai.js";
 
 export const generateScript = async (req: Request, res: Response) => {
   try {
@@ -16,35 +11,6 @@ export const generateScript = async (req: Request, res: Response) => {
         message: "Topic is required",
       });
     }
-
-    /* ================= CONFIG ================= */
-
-    const generationConfig: GenerateContentConfig = {
-      maxOutputTokens: 2048,
-      temperature: 0.7,
-      topP: 0.9,
-      responseModalities: ["TEXT"],
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-      ],
-    };
-
-    /* ================= PROMPT ================= */
 
     const prompt = `
 You are a professional YouTube script writer.
@@ -60,34 +26,25 @@ Structure:
 4. Example
 5. Outro with CTA
 
-Make it engaging, clear, and beginner-friendly.
+Make it engaging and beginner-friendly.
 `;
 
-    /* ================= AI CALL ================= */
-
-    const response: any = await ai.models.generateContent({
-      model: "gemini-1.5-flash", // ✅ stable model
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: generationConfig,
+    // ✅ Gemini model
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
     });
 
-    /* ================= PARSE RESPONSE ================= */
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
 
-    const candidate = response?.candidates?.[0];
-
-    const text =
-      candidate?.content?.parts?.map((p: any) => p.text).join("") || "";
+    const text = response.text();
 
     if (!text) {
-      console.error("FULL RESPONSE:", JSON.stringify(response, null, 2));
-
       return res.status(500).json({
         success: false,
         message: "AI failed to generate script",
       });
     }
-
-    /* ================= RESPONSE ================= */
 
     return res.status(200).json({
       success: true,
@@ -95,11 +52,11 @@ Make it engaging, clear, and beginner-friendly.
     });
 
   } catch (error: any) {
-    console.error("SCRIPT ERROR:", error);
+    console.error("SCRIPT ERROR:", error.message);
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Internal Server Error",
+      message: error.message || "Error generating script",
     });
   }
 };

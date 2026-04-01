@@ -1,18 +1,16 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../configs/api"; // ✅ USE YOUR AXIOS INSTANCE
 import { motion } from "framer-motion";
 
 const ScriptGenerator = () => {
-  const [topic, setTopic] = useState<string>("");
-  const [tone, setTone] = useState<string>("Professional");
-  const [length, setLength] = useState<string>("Medium");
-  const [script, setScript] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [topic, setTopic] = useState("");
+  const [tone, setTone] = useState("Professional");
+  const [length, setLength] = useState("Medium");
+  const [script, setScript] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-  const handleGenerate = async (): Promise<void> => {
-    if (!topic) {
+  const handleGenerate = async () => {
+    if (!topic.trim()) {
       alert("Please enter topic");
       return;
     }
@@ -20,10 +18,12 @@ const ScriptGenerator = () => {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        `${BASE_URL}/api/script/generate-script`,
-        { topic, tone, length }
-      );
+      // ✅ FIXED API CALL
+      const res = await api.post("/api/script/generate-script", {
+        topic,
+        tone,
+        length,
+      });
 
       setScript(res.data.script);
 
@@ -50,65 +50,47 @@ const ScriptGenerator = () => {
         transition={{ duration: 0.6 }}
         className="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl p-8"
       >
-        <motion.h2
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-3xl font-bold text-gray-800 mb-6 text-center"
-        >
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           🚀 AI Content Script Generator
-        </motion.h2>
+        </h2>
 
         {/* Topic Input */}
         <input
           type="text"
           placeholder="Enter video topic..."
-          className="w-full border border-gray-300 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border p-3 mb-4 rounded-lg"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
         />
 
         {/* Options */}
         <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <select
-            className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={tone}
-            onChange={(e) => setTone(e.target.value)}
-          >
-            <option value="Professional">Professional</option>
-            <option value="Motivational">Motivational</option>
-            <option value="Funny">Funny</option>
+          <select value={tone} onChange={(e) => setTone(e.target.value)}>
+            <option>Professional</option>
+            <option>Motivational</option>
+            <option>Funny</option>
           </select>
 
-          <select
-            className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={length}
-            onChange={(e) => setLength(e.target.value)}
-          >
-            <option value="Short">Short</option>
-            <option value="Medium">Medium</option>
-            <option value="Long">Long</option>
+          <select value={length} onChange={(e) => setLength(e.target.value)}>
+            <option>Short</option>
+            <option>Medium</option>
+            <option>Long</option>
           </select>
         </div>
 
         {/* Button */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ scale: 1.03 }}
+        <button
           onClick={handleGenerate}
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 rounded-lg font-semibold transition-all shadow-md"
+          className="w-full bg-blue-600 text-white py-3 rounded-lg"
         >
-          {loading ? "Generating Script..." : "Generate Script"}
-        </motion.button>
+          {loading ? "Generating..." : "Generate Script"}
+        </button>
 
         {/* Output */}
         {script && (
-          <motion.textarea
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="w-full mt-6 border border-gray-300 rounded-lg p-4 h-80 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <textarea
+            className="w-full mt-6 border p-4 h-80 rounded-lg"
             value={script}
             readOnly
           />
