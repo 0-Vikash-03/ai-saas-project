@@ -29,15 +29,13 @@ Structure:
 Make it engaging and beginner-friendly.
 `;
 
-    // ✅ CORRECT GEMINI USAGE
-    const model = ai.getGenerativeModel({
-      model: "gemini-1.5-flash",
+    // ✅ New SDK method
+    const response: any = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-
-    const text = response.text();
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
       return res.status(500).json({
@@ -53,7 +51,6 @@ Make it engaging and beginner-friendly.
 
   } catch (error: any) {
     console.error("SCRIPT ERROR:", error.message);
-
     return res.status(500).json({
       success: false,
       message: error.message || "Error generating script",

@@ -12,8 +12,6 @@ export const generateBlog = async (req: Request, res: Response) => {
       });
     }
 
-    /* ================= PROMPT ================= */
-
     const prompt = `
 You are an expert SEO blog writer.
 
@@ -32,18 +30,13 @@ Use markdown formatting.
 Make it engaging, informative, and easy to read.
 `;
 
-    /* ================= AI CALL (FIXED) ================= */
-
-    const model = ai.getGenerativeModel({
-      model: "gemini-1.5-flash",
+    // ✅ New SDK method
+    const response: any = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-
-    const blog = response.text();
-
-    /* ================= VALIDATION ================= */
+    const blog = response.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!blog) {
       return res.status(500).json({
@@ -52,8 +45,6 @@ Make it engaging, informative, and easy to read.
       });
     }
 
-    /* ================= RESPONSE ================= */
-
     return res.status(200).json({
       success: true,
       blog,
@@ -61,7 +52,6 @@ Make it engaging, informative, and easy to read.
 
   } catch (error: any) {
     console.error("BLOG ERROR:", error.message);
-
     return res.status(500).json({
       success: false,
       message: error.message || "Blog generation failed",
