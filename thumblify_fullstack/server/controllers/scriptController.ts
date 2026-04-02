@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import ai from "../configs/ai.js";
+import Script from "../models/ScriptModel.js"; // ✅ IMPORT MODEL
 
+// ✅ GENERATE + SAVE SCRIPT
 export const generateScript = async (req: Request, res: Response) => {
   try {
     const { topic, tone = "Professional", length = "Medium" } = req.body;
@@ -29,7 +31,6 @@ Structure:
 Make it engaging and beginner-friendly.
 `;
 
-    // ✅ New SDK method
     const response: any = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -44,9 +45,19 @@ Make it engaging and beginner-friendly.
       });
     }
 
+    // ✅ SAVE TO MONGODB
+    const savedScript = await Script.create({
+      topic,
+      tone,
+      length,
+      content: text,
+      userId: "demoUser" // later replace with real user
+    });
+
     return res.status(200).json({
       success: true,
       script: text,
+      id: savedScript._id
     });
 
   } catch (error: any) {
@@ -54,6 +65,27 @@ Make it engaging and beginner-friendly.
     return res.status(500).json({
       success: false,
       message: error.message || "Error generating script",
+    });
+  }
+};
+
+
+
+// ✅ GET HISTORY
+export const getScripts = async (req: Request, res: Response) => {
+  try {
+    const scripts = await Script.find({ userId: "demoUser" })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      scripts
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching history"
     });
   }
 };
