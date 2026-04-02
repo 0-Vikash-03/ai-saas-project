@@ -4,42 +4,86 @@ import SectionTitle from "../components/SectionTitle"
 import { DollarSignIcon, RocketIcon, CrownIcon } from "lucide-react"
 import { motion } from "framer-motion"
 
-export default function PricingInfoSection() {
+export default function PricingSection() {
+
+    const BASE_URL =
+        import.meta.env.VITE_API_URL ||
+        "https://ai-saas-project-66sm.onrender.com";
 
     const plans = [
         {
             icon: DollarSignIcon,
             title: "Starter Plan",
-            price: "$9 / month",
-            description: "Basic thumbnail generation with limited AI credits. Perfect for beginners starting their channel."
+            price: 9
         },
         {
             icon: RocketIcon,
             title: "Pro Plan",
-            price: "$19 / month",
-            description: "Generate more thumbnails with advanced AI tools and priority processing."
+            price: 19
         },
         {
             icon: CrownIcon,
             title: "Premium Plan",
-            price: "$39 / month",
-            description: "Unlimited thumbnail generation with all premium features and fastest AI processing."
+            price: 39
         }
-    ]
+    ];
+
+    // ✅ Dummy Payment Function
+    const handlePayment = async (plan: any) => {
+        alert(`Processing payment for ${plan.title}...`);
+
+        try {
+            const res = await fetch(`${BASE_URL}/api/payment/pay`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    plan: plan.title,
+                    amount: plan.price,
+                    userId: "demoUser"
+                })
+            });
+
+            if (!res.ok) {
+                throw new Error("Request failed");
+            }
+
+            const data = await res.json();
+
+            if (data.status === "success") {
+                localStorage.setItem("userPlan", plan.title);
+                localStorage.setItem("txnId", data.transactionId);
+
+                alert(`✅ Payment Successful!\nPlan: ${plan.title}`);
+
+                window.location.href = "/dashboard";
+            } else {
+                alert("❌ Payment Failed!");
+            }
+
+        } catch (error) {
+            console.error("Payment Error:", error);
+            alert("❌ Server error! Check backend.");
+        }
+    };
 
     return (
-        <div id="pricing-info" className="px-4 md:px-16 lg:px-24 xl:px-32 py-24 bg-white">
+        <div
+            id="pricing-info"
+            className="px-4 md:px-16 lg:px-24 xl:px-32 py-24 bg-white"
+        >
 
             <SectionTitle
                 text1="Our Pricing"
                 text2="Simple Plans for Creators"
-                text3="Choose a plan that fits your thumbnail creation needs."
+                text3="Choose a plan that fits your needs."
             />
 
             <div className="flex flex-wrap justify-center gap-8 mt-20">
 
                 {plans.map((item, index) => {
-                    const Icon = item.icon
+                    const Icon = item.icon;
 
                     return (
                         <motion.div
@@ -64,23 +108,22 @@ export default function PricingInfoSection() {
                             </h3>
 
                             <p className="text-blue-600 font-semibold mt-2">
-                                {item.price}
+                                ${item.price} / month
                             </p>
 
-                            <p className="text-gray-600 mt-3 text-sm leading-relaxed">
-                                {item.description}
-                            </p>
-
-                            {/* Pricing Button */}
-                            <button className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
-                                Get Started
+                            {/* ✅ PAYMENT BUTTON */}
+                            <button
+                                onClick={() => handlePayment(item)}
+                                className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                            >
+                                Buy Now
                             </button>
 
                         </motion.div>
-                    )
+                    );
                 })}
 
             </div>
         </div>
-    )
+    );
 }

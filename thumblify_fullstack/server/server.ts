@@ -11,6 +11,9 @@ import ContactRouter from "./routes/ContactRoutes.js";
 import scriptRoutes from "./routes/scriptRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
+import paymentRoutes from "./routes/PaymentRoutes.js";
+
+
 
 const app = express();
 
@@ -46,6 +49,7 @@ app.use("/api/contact", ContactRouter);
 app.use("/api/script", scriptRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/video", videoRoutes);
+app.use("/api/payment", paymentRoutes);
 
 // ✅ 404 handler (safe, no "*")
 app.use((req, res) => {
