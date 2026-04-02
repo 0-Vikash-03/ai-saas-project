@@ -15,11 +15,10 @@ export default function BlogGenerator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ NEW STATES
   const [history, setHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("generator");
 
-  // 🔥 FETCH HISTORY
+  // ================= FETCH HISTORY =================
   const fetchHistory = async () => {
     try {
       const res = await api.get("/api/blog/history");
@@ -33,7 +32,7 @@ export default function BlogGenerator() {
     fetchHistory();
   }, []);
 
-  // 🔥 GENERATE BLOG
+  // ================= GENERATE =================
   const generateBlog = async () => {
     if (!topic.trim()) return;
 
@@ -49,7 +48,7 @@ export default function BlogGenerator() {
 
       if (res.data.success) {
         setBlog(res.data.blog);
-        fetchHistory(); // refresh history
+        fetchHistory();
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed");
@@ -58,19 +57,19 @@ export default function BlogGenerator() {
     }
   };
 
-  // 🔥 DELETE BLOG
+  // ================= DELETE =================
   const deleteBlog = async (id: string) => {
     await api.delete(`/api/blog/${id}`);
     fetchHistory();
   };
 
-  // ⭐ FAVORITE
+  // ================= FAVORITE =================
   const toggleFavorite = async (id: string) => {
     await api.patch(`/api/blog/favorite/${id}`);
     fetchHistory();
   };
 
-  // 📋 COPY
+  // ================= COPY =================
   const copyBlog = () => {
     navigator.clipboard.writeText(blog);
     alert("Copied!");
@@ -79,12 +78,14 @@ export default function BlogGenerator() {
   return (
     <div className="min-h-screen px-6">
 
-      {/* 🔥 TOGGLE BUTTON */}
-      <div className="flex gap-4 justify-center mt-6">
+      {/* ================= TOGGLE ================= */}
+      <div className="flex justify-center gap-4 mt-6">
         <button
           onClick={() => setActiveTab("history")}
-          className={`px-4 py-2 rounded ${
-            activeTab === "history" ? "bg-black text-white" : "bg-gray-200"
+          className={`px-5 py-2 rounded-lg ${
+            activeTab === "history"
+              ? "bg-black text-white"
+              : "bg-gray-200"
           }`}
         >
           📜 My Blogs
@@ -92,8 +93,10 @@ export default function BlogGenerator() {
 
         <button
           onClick={() => setActiveTab("generator")}
-          className={`px-4 py-2 rounded ${
-            activeTab === "generator" ? "bg-black text-white" : "bg-gray-200"
+          className={`px-5 py-2 rounded-lg ${
+            activeTab === "generator"
+              ? "bg-black text-white"
+              : "bg-gray-200"
           }`}
         >
           ✍️ Generator
@@ -105,23 +108,26 @@ export default function BlogGenerator() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="max-w-5xl mx-auto mt-10 bg-white p-6 rounded-xl shadow"
+          className="max-w-6xl mx-auto mt-10 bg-white p-6 rounded-xl shadow"
         >
-          <h1 className="text-3xl font-bold mb-6">AI Blog Generator</h1>
+          <h1 className="text-3xl font-bold mb-6">
+            AI Blog Generator
+          </h1>
 
+          {/* INPUTS */}
           <div className="grid md:grid-cols-3 gap-4 mb-4">
             <input
               type="text"
               placeholder="Enter topic..."
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="border p-3 rounded"
+              className="border p-3 rounded-lg"
             />
 
             <select
               value={tone}
               onChange={(e) => setTone(e.target.value)}
-              className="border p-3 rounded"
+              className="border p-3 rounded-lg"
             >
               <option>Professional</option>
               <option>Casual</option>
@@ -131,39 +137,71 @@ export default function BlogGenerator() {
             <select
               value={words}
               onChange={(e) => setWords(Number(e.target.value))}
-              className="border p-3 rounded"
+              className="border p-3 rounded-lg"
             >
-              <option value={400}>400</option>
-              <option value={600}>600</option>
-              <option value={800}>800</option>
+              <option value={400}>400 words</option>
+              <option value={600}>600 words</option>
+              <option value={800}>800 words</option>
             </select>
           </div>
 
           <button
             onClick={generateBlog}
-            className="bg-blue-600 text-white px-6 py-2 rounded"
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg"
           >
             {loading ? "Generating..." : "Generate"}
           </button>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
+          {error && (
+            <p className="text-red-500 mt-2">{error}</p>
+          )}
 
-          {/* RESULT */}
+          {/* ================= BLOG OUTPUT ================= */}
           {blog && (
-            <div className="mt-6">
-              <div className="flex justify-between mb-2">
-                <h2 className="text-xl font-semibold">Result</h2>
-                <button
-                  onClick={copyBlog}
-                  className="bg-black text-white px-3 py-1 rounded"
-                >
-                  Copy
-                </button>
+            <div className="mt-10 grid lg:grid-cols-4 gap-6">
+
+              {/* MAIN BLOG */}
+              <div className="lg:col-span-3 bg-white border rounded-xl p-8 shadow-sm max-h-[75vh] overflow-y-auto scrollbar-thin">
+
+                <div className="flex justify-between mb-6">
+                  <h2 className="text-2xl font-bold">
+                    Generated Blog
+                  </h2>
+
+                  <button
+                    onClick={copyBlog}
+                    className="bg-black text-white px-4 py-1 rounded-lg"
+                  >
+                    Copy
+                  </button>
+                </div>
+
+                <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed">
+                  <ReactMarkdown>{blog}</ReactMarkdown>
+                </div>
+
               </div>
 
-              <div className="border p-4 max-h-[60vh] overflow-y-auto">
-                <ReactMarkdown>{blog}</ReactMarkdown>
+              {/* SIDEBAR */}
+              <div className="hidden lg:block sticky top-28 h-fit">
+                <div className="bg-white border rounded-xl p-4 shadow-sm">
+                  <h3 className="font-semibold mb-3">
+                    📑 Sections
+                  </h3>
+
+                  <div className="space-y-2 text-sm text-gray-600">
+                    {blog
+                      .split("\n")
+                      .filter(line => line.startsWith("##"))
+                      .map((heading, i) => (
+                        <p key={i}>
+                          {heading.replace("##", "")}
+                        </p>
+                      ))}
+                  </div>
+                </div>
               </div>
+
             </div>
           )}
         </motion.div>
@@ -176,22 +214,28 @@ export default function BlogGenerator() {
           animate={{ opacity: 1 }}
           className="max-w-5xl mx-auto mt-10"
         >
-          <h2 className="text-2xl font-bold mb-4">📜 Blog History</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            📜 Blog History
+          </h2>
 
           <div className="space-y-4">
             {history.map((item) => (
               <div
                 key={item._id}
-                className="border p-4 rounded bg-gray-50"
+                className="border p-4 rounded-lg bg-gray-50"
               >
                 <div className="flex justify-between items-center">
-                  <h3 className="font-semibold">{item.topic}</h3>
+                  <h3 className="font-semibold">
+                    {item.topic}
+                  </h3>
 
                   <div className="flex gap-3">
                     <button
                       onClick={() => toggleFavorite(item._id)}
                       className={`text-xl ${
-                        item.isFavorite ? "text-yellow-500" : "text-gray-400"
+                        item.isFavorite
+                          ? "text-yellow-500"
+                          : "text-gray-400"
                       }`}
                     >
                       ⭐
