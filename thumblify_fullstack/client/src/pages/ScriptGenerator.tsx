@@ -8,15 +8,13 @@ const ScriptGenerator = () => {
   const [length, setLength] = useState("Medium");
   const [script, setScript] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ✅ NEW: History state
   const [history, setHistory] = useState<any[]>([]);
 
-  // ✅ Fetch history
+  // ✅ FETCH HISTORY
   const fetchHistory = async () => {
     try {
       const res = await api.get("/api/script/history");
-      setHistory(res.data.scripts);
+      setHistory(res.data?.scripts || []);
     } catch (error) {
       console.error("History Error:", error);
     }
@@ -26,6 +24,7 @@ const ScriptGenerator = () => {
     fetchHistory();
   }, []);
 
+  // ✅ GENERATE SCRIPT
   const handleGenerate = async () => {
     if (!topic.trim()) {
       alert("Please enter topic");
@@ -43,7 +42,7 @@ const ScriptGenerator = () => {
 
       setScript(res.data.script);
 
-      // ✅ Refresh history after new script
+      // refresh history
       fetchHistory();
 
     } catch (error: any) {
@@ -61,6 +60,18 @@ const ScriptGenerator = () => {
     }
   };
 
+  // ✅ DELETE SCRIPT
+  const handleDelete = async (id: string) => {
+    await api.delete(`/api/script/${id}`);
+    fetchHistory();
+  };
+
+  // ✅ TOGGLE FAVORITE
+  const handleFavorite = async (id: string) => {
+    await api.patch(`/api/script/favorite/${id}`);
+    fetchHistory();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pt-28 pb-20 px-6">
       <motion.div
@@ -69,11 +80,12 @@ const ScriptGenerator = () => {
         transition={{ duration: 0.6 }}
         className="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl p-8"
       >
+
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           🚀 AI Content Script Generator
         </h2>
 
-        {/* Topic Input */}
+        {/* INPUT */}
         <input
           type="text"
           placeholder="Enter video topic..."
@@ -82,7 +94,7 @@ const ScriptGenerator = () => {
           onChange={(e) => setTopic(e.target.value)}
         />
 
-        {/* Options */}
+        {/* OPTIONS */}
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           <select value={tone} onChange={(e) => setTone(e.target.value)}>
             <option>Professional</option>
@@ -97,7 +109,7 @@ const ScriptGenerator = () => {
           </select>
         </div>
 
-        {/* Button */}
+        {/* BUTTON */}
         <button
           onClick={handleGenerate}
           disabled={loading}
@@ -106,7 +118,7 @@ const ScriptGenerator = () => {
           {loading ? "Generating..." : "Generate Script"}
         </button>
 
-        {/* Output */}
+        {/* OUTPUT */}
         {script && (
           <textarea
             className="w-full mt-6 border p-4 h-80 rounded-lg"
@@ -115,17 +127,25 @@ const ScriptGenerator = () => {
           />
         )}
 
-        {/* ✅ HISTORY SECTION */}
-        {history.length > 0 && (
-          <div className="mt-10">
-            <h3 className="text-xl font-semibold mb-4">📜 Script History</h3>
+        {/* HISTORY */}
+        <div className="mt-10">
+          <h3 className="text-xl font-semibold mb-4">📜 Script History</h3>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {history.map((item, index) => (
+          {history.length === 0 && (
+            <p className="text-gray-500">No history found</p>
+          )}
+
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {history.map((item) => (
+              <div
+                key={item._id}
+                className="border p-4 rounded-lg bg-gray-50"
+              >
+
+                {/* CLICK TO LOAD */}
                 <div
-                  key={index}
-                  className="border p-4 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer"
                   onClick={() => setScript(item.content)}
+                  className="cursor-pointer"
                 >
                   <p className="font-semibold">{item.topic}</p>
                   <p className="text-sm text-gray-500">
@@ -136,10 +156,33 @@ const ScriptGenerator = () => {
                     {item.content}
                   </p>
                 </div>
-              ))}
-            </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-4 mt-3">
+
+                  {/* FAVORITE */}
+                  <button
+                    onClick={() => handleFavorite(item._id)}
+                    className="text-yellow-500 text-lg"
+                  >
+                    {item.isFavorite ? "⭐" : "☆"}
+                  </button>
+
+                  {/* DELETE */}
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className="text-red-500 text-sm"
+                  >
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+
       </motion.div>
     </div>
   );

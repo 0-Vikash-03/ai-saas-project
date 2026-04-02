@@ -7,6 +7,10 @@ const scriptSchema = new mongoose.Schema(
     length: String,
     content: String,
     userId: String,
+    isFavorite: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );

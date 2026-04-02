@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import ai from "../configs/ai.js";
-import Script from "../models/ScriptModel.js"; // ✅ IMPORT MODEL
+import Script from "../models/ScriptModel.js";
 
 // ✅ GENERATE + SAVE SCRIPT
 export const generateScript = async (req: Request, res: Response) => {
@@ -32,7 +32,7 @@ Make it engaging and beginner-friendly.
 `;
 
     const response: any = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
@@ -45,19 +45,19 @@ Make it engaging and beginner-friendly.
       });
     }
 
-    // ✅ SAVE TO MONGODB
+    // ✅ SAVE TO DB
     const savedScript = await Script.create({
       topic,
       tone,
       length,
       content: text,
-      userId: "demoUser" // later replace with real user
+      userId: "demoUser",
     });
 
     return res.status(200).json({
       success: true,
       script: text,
-      id: savedScript._id
+      id: savedScript._id,
     });
 
   } catch (error: any) {
@@ -69,8 +69,6 @@ Make it engaging and beginner-friendly.
   }
 };
 
-
-
 // ✅ GET HISTORY
 export const getScripts = async (req: Request, res: Response) => {
   try {
@@ -79,13 +77,63 @@ export const getScripts = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      scripts
+      scripts,
     });
 
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: "Error fetching history"
+      message: "Error fetching history",
+    });
+  }
+};
+
+// ✅ DELETE SCRIPT
+export const deleteScript = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await Script.findByIdAndDelete(id);
+
+    return res.json({
+      success: true,
+      message: "Deleted successfully",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Delete failed",
+    });
+  }
+};
+
+// ✅ TOGGLE FAVORITE
+export const toggleFavorite = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const script = await Script.findById(id);
+
+    if (!script) {
+      return res.status(404).json({
+        success: false,
+        message: "Script not found",
+      });
+    }
+
+    script.isFavorite = !script.isFavorite;
+    await script.save();
+
+    return res.json({
+      success: true,
+      script,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Favorite update failed",
     });
   }
 };
