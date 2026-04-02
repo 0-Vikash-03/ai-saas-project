@@ -7,7 +7,7 @@ export const generateBlog = async (req: Request, res: Response) => {
   try {
     const { topic, tone = "Professional", words = 600 } = req.body;
 
-    if (!topic) {
+    if (!topic?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Topic is required",
@@ -16,23 +16,21 @@ export const generateBlog = async (req: Request, res: Response) => {
 
     // 🔥 PROFESSIONAL PROMPT
     const prompt = `
-You are a professional SEO blog writer.
+You are an expert SEO blog writer.
 
-Write a high-quality, ${words}-word blog post on: "${topic}"
+Write a ${words}-word blog on "${topic}"
 
 Tone: ${tone}
 
-Requirements:
-- SEO optimized title (H1)
-- Engaging introduction
-- 3–5 sections with H2 headings
-- Use bullet points where needed
-- Include real-world examples
-- Clear and professional language
+Rules:
+- SEO optimized H1 title
+- Strong introduction
+- 3–5 H2 headings
+- Use bullet points where useful
+- Add real-world examples
+- Clear, human-like writing
 - Strong conclusion
-- Use Markdown formatting
-
-Make it human-like, readable, and valuable.
+- Markdown format
 `;
 
     const response: any = await ai.models.generateContent({
@@ -41,7 +39,7 @@ Make it human-like, readable, and valuable.
     });
 
     const text =
-      response?.candidates?.[0]?.content?.parts?.[0]?.text;
+      response?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (!text) {
       return res.status(500).json({
@@ -50,17 +48,24 @@ Make it human-like, readable, and valuable.
       });
     }
 
-    // 🔥 EXTRACT TITLE (first line)
-    const title = text.split("\n")[0].replace("#", "").trim();
+    // ================= META EXTRACTION =================
 
-    // 🔥 EXTRACT EXCERPT
-    const excerpt = text.split("\n").slice(1, 3).join(" ").slice(0, 150);
+    // ✅ TITLE
+    const firstLine = text.split("\n")[0] || "Untitled Blog";
+    const title = firstLine.replace(/^#+\s*/, "").trim();
 
-    // 🔥 READING TIME
-    const wordCount = text.split(" ").length;
-    const readingTime = Math.ceil(wordCount / 200); // 200 wpm
+    // ✅ EXCERPT
+    const excerpt = text
+      .split("\n")
+      .slice(1, 3)
+      .join(" ")
+      .slice(0, 160);
 
-    // ✅ SAVE TO DB
+    // ✅ WORD COUNT + READING TIME
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const readingTime = Math.ceil(wordCount / 200);
+
+    // ================= SAVE =================
     const saved = await Blog.create({
       title,
       topic,
@@ -72,7 +77,7 @@ Make it human-like, readable, and valuable.
       userId: "demoUser",
     });
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       blog: text,
       meta: {
@@ -85,7 +90,7 @@ Make it human-like, readable, and valuable.
     });
 
   } catch (error: any) {
-    console.error("BLOG ERROR:", error.message);
+    console.error("BLOG ERROR:", error);
 
     return res.status(500).json({
       success: false,
@@ -99,7 +104,7 @@ export const getBlogs = async (req: Request, res: Response) => {
   try {
     const blogs = await Blog.find({ userId: "demoUser" })
       .sort({ createdAt: -1 })
-      .select("-content"); // 🔥 faster response
+      .select("title topic tone words excerpt readingTime isFavorite createdAt");
 
     return res.status(200).json({
       success: true,
@@ -126,7 +131,7 @@ export const getBlogById = async (req: Request, res: Response) => {
       });
     }
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       blog,
     });
@@ -139,10 +144,55 @@ export const getBlogById = async (req: Request, res: Response) => {
   }
 };
 
+// ================= UPDATE BLOG =================
+export const updateBlog = async (req: Request, res: Response) => {
+  try {
+    const { content } = req.body;
+
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: "Content required",
+      });
+    }
+
+    const updated = await Blog.findByIdAndUpdate(
+      req.params.id,
+      { content },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      blog: updated,
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Update failed",
+    });
+  }
+};
+
 // ================= DELETE =================
 export const deleteBlog = async (req: Request, res: Response) => {
   try {
-    await Blog.findByIdAndDelete(req.params.id);
+    const deleted = await Blog.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
 
     return res.json({
       success: true,

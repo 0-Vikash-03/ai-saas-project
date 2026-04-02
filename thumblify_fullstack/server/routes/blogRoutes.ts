@@ -2,26 +2,19 @@ import express from "express";
 import {
   generateBlog,
   getBlogs,
+  getBlogById,
   deleteBlog,
   toggleFavorite,
-  getBlogById
+  updateBlog
 } from "../controllers/blogController.js";
 
 const router = express.Router();
 
-// ✅ CREATE + SAVE
 router.post("/generate", generateBlog);
-
-// ✅ GET ALL BLOGS (HISTORY)
 router.get("/history", getBlogs);
-
-// ✅ GET SINGLE BLOG
 router.get("/:id", getBlogById);
-
-// ✅ DELETE BLOG
 router.delete("/:id", deleteBlog);
-
-// ✅ FAVORITE TOGGLE
 router.patch("/favorite/:id", toggleFavorite);
+router.put("/:id", updateBlog);
 
 export default router;
