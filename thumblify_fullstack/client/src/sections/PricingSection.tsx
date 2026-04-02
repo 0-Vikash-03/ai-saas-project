@@ -57,7 +57,7 @@ export default function PricingSection() {
 
                 alert(`✅ Payment Successful!\nPlan: ${plan.title}`);
 
-                window.location.href = "/dashboard";
+                window.location.href = "/";
             } else {
                 alert("❌ Payment Failed!");
             }
